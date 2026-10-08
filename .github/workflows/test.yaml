@@ -1,0 +1,69 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  WRAPPERS_VERSION: v9.19.0
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pre-commit black
+      - run: pre-commit run --all-files --show-diff-on-failure
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ".[dev]"
+      - run: python -m pytest -v tests/test_unit.py tests/test_providers.py
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Miniforge (conda and mamba)
+        run: |
+          curl -sSL -o miniforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+          bash miniforge.sh -b -p "$HOME/miniforge"
+          echo "$HOME/miniforge/bin" >> "$GITHUB_PATH"
+
+      - name: Install
+        run: pip install ".[workflow,dev]"
+
+      - name: Tutorial data
+        run: |
+          curl -sSL -o tutorial.tar.gz https://github.com/snakemake/snakemake-tutorial-data/archive/v5.4.5.tar.gz
+          tar --wildcards -xf tutorial.tar.gz --strip 1 "*/data"
+
+      - name: Wrappers catalog
+        run: workflow-secretary prepare --provider snakemake --wrappers-version "$WRAPPERS_VERSION" --dest "$HOME/wrappers"
+
+      - name: Cache conda environments
+        uses: actions/cache@v4
+        with:
+          path: ~/conda-envs
+          key: conda-envs-${{ env.WRAPPERS_VERSION }}
+
+      - name: Integration tests
+        env:
+          WORKFLOW_SECRETARY_TEST_DATA: data
+        run: |
+          export WORKFLOW_SECRETARY_WRAPPERS="$HOME/wrappers"
+          export WORKFLOW_SECRETARY_CONDA_PREFIX="$HOME/conda-envs"
+          python tests/test_integration.py
