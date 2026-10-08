@@ -1,0 +1,17 @@
+- tool: get_environment
+- tool: list_input_dir
+- tool: search_wrappers
+  args: {query: faidx}
+- tool: get_wrapper_details
+  args: {wrapper_path: bio/samtools/faidx}
+- tool: execute_wrapper
+  args:
+    rule_name: faidx
+    wrapper_path: bio/samtools/faidx
+    inputs: {fa: genome.fa}
+    output: {fai: genome.fa.fai}
+    params: {}
+    threads: 1
+- tool: list_work_dir
+- tool: finish
+  args: {status: complete, summary: Indexed the reference., issues: [], reason: All steps produced outputs.}

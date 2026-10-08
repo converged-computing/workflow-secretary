@@ -1,0 +1,9 @@
+name: qc-and-trim
+source: fractale-experiments agentic-workflows qc-and-trim (20 runs, 20260516)
+data: not published; paired-end Tumor and Normal reads plus adapters.fa
+goal: |
+  Perform quality control and adapter trimming on the paired-end Tumor and Normal
+  samples located in the INPUT_DIR. Run FastQC on the raw reads, trim them using
+  Cutadapt with the provided adapters.fa file, and run FastQC again on the trimmed reads.
+  Finally, use MultiQC to aggregate all FastQC reports and Cutadapt logs into a
+  single summary report. Write all outputs to WORK_DIR.

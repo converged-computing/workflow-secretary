@@ -1,0 +1,83 @@
+# Replays the full variant-calling plan for all three tutorial samples, the way
+# the agent does it with a sample sheet and {sample} wildcards. Needs the
+# tutorial data v5.4.5 as --input and real snakemake, conda and wrappers.
+- tool: get_environment
+- tool: list_input_dir
+- tool: create_sample_sheet
+  args:
+    samples:
+      - {sample: A, fastq: samples/A.fastq}
+      - {sample: B, fastq: samples/B.fastq}
+      - {sample: C, fastq: samples/C.fastq}
+- tool: search_wrappers
+  args: {query: bwa mem}
+- tool: get_wrapper_details
+  args: {wrapper_path: bio/bwa/mem}
+- tool: execute_wrapper
+  args:
+    rule_name: bwa_mem
+    wrapper_path: bio/bwa/mem
+    inputs:
+      reads: ["samples/{sample}.fastq"]
+      idx: [genome.fa.amb, genome.fa.ann, genome.fa.bwt, genome.fa.pac, genome.fa.sa]
+    output: {bam: "{sample}.bam"}
+    params: {extra: "-R '@RG\\tID:{sample}\\tSM:{sample}'", sorting: none}
+    threads: 1
+- tool: list_work_dir
+- tool: get_wrapper_details
+  args: {wrapper_path: bio/samtools/sort}
+- tool: execute_wrapper
+  args:
+    rule_name: samtools_sort
+    wrapper_path: bio/samtools/sort
+    inputs: {bam: "steps/01_bwa_mem/{sample}.bam"}
+    output: {bam: "{sample}.sorted.bam"}
+    params: {extra: ""}
+    threads: 1
+- tool: list_work_dir
+- tool: get_wrapper_details
+  args: {wrapper_path: bio/samtools/index}
+- tool: execute_wrapper
+  args:
+    rule_name: samtools_index
+    wrapper_path: bio/samtools/index
+    inputs: {bam: "steps/02_samtools_sort/{sample}.sorted.bam"}
+    output: {bai: "{sample}.sorted.bam.bai"}
+    params: {}
+    threads: 1
+- tool: list_work_dir
+- tool: get_wrapper_details
+  args: {wrapper_path: bio/bcftools/mpileup}
+- tool: execute_wrapper
+  args:
+    rule_name: bcftools_mpileup
+    wrapper_path: bio/bcftools/mpileup
+    inputs:
+      alignments:
+        - steps/02_samtools_sort/A.sorted.bam
+        - steps/02_samtools_sort/B.sorted.bam
+        - steps/02_samtools_sort/C.sorted.bam
+      ref: genome.fa
+      index: genome.fa.fai
+    output: {pileup: all.pileup.bcf}
+    params: {uncompressed_bcf: false, extra: ""}
+    threads: 1
+- tool: list_work_dir
+- tool: get_wrapper_details
+  args: {wrapper_path: bio/bcftools/call}
+- tool: execute_wrapper
+  args:
+    rule_name: bcftools_call
+    wrapper_path: bio/bcftools/call
+    inputs: {pileup: steps/04_bcftools_mpileup/all.pileup.bcf}
+    output: {calls: all.calls.bcf}
+    params: {uncompressed_bcf: false, caller: -m, extra: ""}
+    threads: 1
+- tool: list_work_dir
+- tool: view_snakefile
+- tool: finish
+  args:
+    status: complete
+    summary: Mapped A, B and C with bwa mem, sorted and indexed, then called variants jointly with bcftools.
+    issues: []
+    reason: Every step produced its outputs.

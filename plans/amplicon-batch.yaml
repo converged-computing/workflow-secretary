@@ -1,0 +1,10 @@
+name: amplicon-batch
+source: fractale-experiments agentic-workflows amplicon-multi-cudapt (21 runs, 20260517-113055 to 20260517-204915)
+data: not published; per-sample folders of paired-end fastq
+goal: |
+  Perform a high-throughput demultiplexing analysis on the raw sequencing data.
+  Identify all sample folders in the input directory and mapping the corresponding paired-end fastq files for each.
+  Then perform a comprehensive quality assessment on all raw data files. Follow this by trimming the paired reads to
+  remove adapters and filter out any bases with a quality score below 20. The entire analysis should be structured to
+  process the samples as a collective batch, generating individual output files for each sample while strictly using
+  relative paths within the workspace.

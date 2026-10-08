@@ -1,0 +1,17 @@
+name: amplicon-demultiplex-shell
+source: fractale-experiments agentic-workflows amplicon-multi-cudapt (3 runs, 20260517-064249 to 20260517-110838)
+data: not published; reads.fq.gz and barcodes.csv
+goal: |
+  Demultiplex the raw reads in 'reads.fq.gz' into separate files for
+  'Sample1', 'Sample2', and 'Sample3' using Cutadapt. The primer pairs
+  for each sample are defined in 'barcodes.csv'. This task is too complex
+  for a standard wrapper; you must use execute_rule with a custom shell command.
+
+  The barcodes.csv file contains:
+  - Sample1: F_primer=AGAGTTTGATCCTGGCTCAG, R_primer=ATTACCGCGGCTGCTGGC
+  - Sample2: F_primer=GACTACHVGGGTATCTAATCC, R_primer=GTGCCAGCMGCCGCGGTAA
+  - Sample3: F_primer=GGCGVACGGGTGAGTAA, R_primer=ATTAGAWACCCBDGTAGTCC
+
+  Construct a single Cutadapt shell command using linked adapters
+  (-g FWD...REV) and named output files (-o {output.Sample1}, etc.)
+  to perform the demultiplexing in one step. Write all outputs to WORK_DIR.
